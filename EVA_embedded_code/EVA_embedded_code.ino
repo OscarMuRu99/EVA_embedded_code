@@ -5,91 +5,55 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
-double FIRWARE_VERSION = 1.0;
+String FIRMWARE_VERSION = "1.0.0";
 
 #if CONFIG_FREERTOS_UNICORE
-#define ARDUINO_RUNNING_CORE 0
+  #define ARDUINO_RUNNING_CORE 0
 #else
-#define ARDUINO_RUNNING_CORE 1
+  #define ARDUINO_RUNNING_CORE 1
 #endif
 
 constexpr unsigned long baud_rate = 9600;
 
 SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
-void setupSerialDebugger()
-{
-	Serial.begin(baud_rate);
-	Serial.println("Hello team! Welcome to the ");
-	Serial.print("Firmware Version: ");
-  Serial.println(FIRWARE_VERSION);
+void setupSerialDebugger() {
+  Serial.begin(baud_rate);
+  Serial.println("Hello team! Welcome to the Firmware Version: " + String(FIRMWARE_VERSION));
 }
 
-void initSystemRoutines()
-{
-	// Humidity routine task
-	xHumidityTaskStatus = xTaskCreatePinnedToCore(
-		&humidityTask,		 // Pointer to task
-		"humidityTask",		 // Name of the task
-		humidity_stack_size,  // Task stack size
-		NULL,				 // Parameters to the task
-		1,					 // Priority
-		&xHumidityTaskHandle, // Handler of the task
-		ARDUINO_RUNNING_CORE // Core ID
-	);
+void initSystemRoutines() {
+  // Humidity routine task
+  xHumidityTaskStatus = xTaskCreatePinnedToCore(
+    &humidityTask, "humidityTask", humidity_stack_size, NULL, 1, &xHumidityTaskHandle, ARDUINO_RUNNING_CORE
+  );
 
   // Luminosity routine task
   xLuminosityTaskStatus = xTaskCreatePinnedToCore(
-    &luminosityTask, //Pointer to task
-    "luminosityTask", // Name of task
-    luminosity_stack_size, // Task stack size
-    NULL, // Parameters of the task
-    1, // Priority
-    &xLuminosityTaskHandle, // Handler of the task
-    ARDUINO_RUNNING_CORE // Core ID
+    &luminosityTask, "luminosityTask", luminosity_stack_size, NULL, 1, &xLuminosityTaskHandle, ARDUINO_RUNNING_CORE
   );
 
-	// WaterPump routine task
-	xWaterPumpTaskStatus = xTaskCreatePinnedToCore(
-		&waterPumpTask,		 // Pointer to task
-		"waterPumpTask",		 // Name of the task
-		water_pump_stack_size,  // Task stack size
-		NULL,				 // Parameters to the task
-		1,					 // Priority
-		&xWaterPumpTaskHandle, // Handler of the task
-		ARDUINO_RUNNING_CORE // Core ID
-	);
+  // WaterPump routine task
+  xWaterPumpTaskStatus = xTaskCreatePinnedToCore(
+    &waterPumpTask, "waterPumpTask", water_pump_stack_size, NULL, 1, &xWaterPumpTaskHandle, ARDUINO_RUNNING_CORE
+  );
 
   // WiFi routine task
-	xWiFiTaskStatus = xTaskCreatePinnedToCore(
-		&wifiTask,		 // Pointer to task
-		"wifiTask",		 // Name of the task
-		wifi_stack_size,  // Task stack size
-		NULL,				 // Parameters to the task
-		1,					 // Priority
-		&xWiFiTaskHandle, // Handler of the task
-		ARDUINO_RUNNING_CORE // Core ID
-	);
+  xWiFiTaskStatus = xTaskCreatePinnedToCore(
+    &wifiTask, "wifiTask", wifi_stack_size, NULL, 1, &xWiFiTaskHandle, ARDUINO_RUNNING_CORE
+  );
 
-	if ((xHumidityTaskStatus == pdPASS) &&
-		(xLuminosityTaskStatus == pdPASS) &&
-		(xWaterPumpTaskStatus == pdPASS) &&
-    (xWiFiTaskStatus)
-		) 
-	{
-		Serial.println("All RTOS tasks created");
-	}
-	else
-	{
-		Serial.println("An error occurred while creating the RTOS tasks");
-	}
+  if (xHumidityTaskStatus == pdPASS && xLuminosityTaskStatus == pdPASS && xWaterPumpTaskStatus == pdPASS && xWiFiTaskStatus == pdPASS) {
+    Serial.println("All RTOS tasks created");
+  } else {
+    Serial.println("An error occurred while creating the RTOS tasks");
+  }
 }
 
 void setup() {
   setupSerialDebugger();
-	if(xMutex != NULL)
-  {
-		initSystemRoutines();
+  if (xMutex != NULL) {
+    initSystemRoutines();
   }
 }
 
